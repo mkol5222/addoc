@@ -24,4 +24,4 @@ sed "${SED_INPLACE[@]}" \
   -e "s/{{BUILD_COMMIT}}/${BUILD_COMMIT}/" \
   dist/index.html
 
-npx wrangler pages deploy dist --project-name=addoc "$@"
+npx --yes wrangler@4.141.0 pages deploy dist --project-name=addoc "$@"
