@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<!-- saved from url=(0067)file:///Users/mkoldov/github/teach/llm/agent-llm-communication.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How Agents Talk to LLMs</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      line-height: 1.6;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #0d1117;
+      color: #c9d1d9;
+    }
+    h1 {
+      color: #58a6ff;
+      border-bottom: 2px solid #30363d;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #79c0ff;
+      margin-top: 40px;
+    }
+    h3 {
+      color: #a5d6ff;
+    }
+    pre {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 16px;
+      overflow-x: auto;
+    }
+    code {
+      font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+      font-size: 14px;
+    }
+    .inline-code {
+      background: #161b22;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #f0883e;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    th, td {
+      border: 1px solid #30363d;
+      padding: 12px;
+      text-align: left;
+    }
+    th {
+      background: #161b22;
+      color: #58a6ff;
+    }
+    .diagram-container {
+      width: 100%;
+      background: #161b22;
+      border: 2px solid #30363d;
+      border-radius: 8px;
+      margin: 20px 0;
+      padding: 20px;
+      overflow-x: auto;
+    }
+    .diagram-container svg {
+      display: block;
+      margin: 0 auto;
+    }
+    .takeaway {
+      background: #1f2937;
+      border-left: 4px solid #3b82f6;
+      padding: 16px;
+      margin: 20px 0;
+      border-radius: 0 6px 6px 0;
+    }
+    .step-header {
+      background: linear-gradient(90deg, #238636 0%, transparent 100%);
+      padding: 8px 16px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+    }
+    .json-key { color: #7ee787; }
+    .json-string { color: #a5d6ff; }
+    .json-value { color: #f0883e; }
+    .comment { color: #8b949e; }
+  </style>
+</head>
+<body>
+  <h1>How Agents Talk to LLMs</h1>
+  <p><em>Understanding API Calls, Messages, and Roles</em></p>
+
+  <h2>Interactive Diagram: Agent-LLM Communication Flow</h2>
+  <div class="diagram-container">
+    <svg viewBox="0 0 800 320" width="760" height="320" xmlns="http://www.w3.org/2000/svg">
+      <!-- Background -->
+      <rect width="800" height="320" fill="#161b22"></rect>
+
+      <!-- Title -->
+      <text x="400" y="35" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="bold" fill="#c9d1d9">Agent-LLM Communication Loop</text>
+
+      <!-- Agent Box -->
+      <rect x="30" y="80" width="150" height="100" rx="8" fill="#1f6feb" stroke="#58a6ff" stroke-width="2"></rect>
+      <text x="105" y="120" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="bold" fill="white">AGENT</text>
+      <text x="105" y="145" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#c9d1d9">(Your Code)</text>
+      <text x="105" y="165" text-anchor="middle" font-family="monospace" font-size="10" fill="#a5d6ff">manages state</text>
+
+      <!-- Messages Array Box -->
+      <rect x="280" y="60" width="240" height="160" rx="8" fill="#238636" stroke="#3fb950" stroke-width="2"></rect>
+      <text x="400" y="90" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="bold" fill="white">messages = [</text>
+      <text x="400" y="115" text-anchor="middle" font-family="monospace" font-size="11" fill="#a5d6ff">{role: "system", content: "..."},</text>
+      <text x="400" y="138" text-anchor="middle" font-family="monospace" font-size="11" fill="#a5d6ff">{role: "user", content: "..."},</text>
+      <text x="400" y="161" text-anchor="middle" font-family="monospace" font-size="11" fill="#a5d6ff">{role: "assistant", content: "..."}</text>
+      <text x="400" y="186" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="bold" fill="white">]</text>
+      <text x="400" y="210" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#8b949e">Full conversation history</text>
+
+      <!-- LLM Box -->
+      <rect x="620" y="80" width="150" height="100" rx="8" fill="#9a6700" stroke="#d29922" stroke-width="2"></rect>
+      <text x="695" y="120" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="bold" fill="white">LLM API</text>
+      <text x="695" y="145" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#c9d1d9">(OpenAI, Claude)</text>
+      <text x="695" y="165" text-anchor="middle" font-family="monospace" font-size="10" fill="#ffd700">STATELESS</text>
+
+      <!-- Arrow 1: Agent -> Messages -->
+      <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#8b949e"></polygon>
+        </marker>
+        <marker id="arrowhead-violet" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#a371f7"></polygon>
+        </marker>
+      </defs>
+
+      <line x1="180" y1="115" x2="270" y2="115" stroke="#8b949e" stroke-width="2" marker-end="url(#arrowhead)"></line>
+      <text x="225" y="105" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#8b949e">1. Build</text>
+
+      <!-- Arrow 2: Messages -> LLM -->
+      <line x1="520" y1="115" x2="610" y2="115" stroke="#8b949e" stroke-width="2" marker-end="url(#arrowhead)"></line>
+      <text x="565" y="105" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#8b949e">2. POST</text>
+
+      <!-- Arrow 3: LLM -> Agent (response, curved) -->
+      <path d="M 695 180 L 695 260 L 105 260 L 105 180" fill="none" stroke="#a371f7" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrowhead-violet)"></path>
+      <text x="400" y="280" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#a371f7">3. Response → Extract content → Append to messages</text>
+
+      <!-- Step indicators -->
+      <circle cx="205" cy="115" r="12" fill="#30363d" stroke="#58a6ff" stroke-width="1"></circle>
+      <text x="205" y="119" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="bold" fill="#58a6ff">1</text>
+
+      <circle cx="545" cy="115" r="12" fill="#30363d" stroke="#58a6ff" stroke-width="1"></circle>
+      <text x="545" y="119" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="bold" fill="#58a6ff">2</text>
+
+      <circle cx="400" cy="260" r="12" fill="#30363d" stroke="#a371f7" stroke-width="1"></circle>
+      <text x="400" y="264" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="bold" fill="#a371f7">3</text>
+    </svg>
+  </div>
+
+  <h2 class="step-header">Step 1: The Basic Structure</h2>
+  <p>When an agent talks to an LLM, it sends an <strong>HTTP POST request</strong> with a JSON body:</p>
+  <pre><code>{
+  <span class="json-key">"model"</span>: <span class="json-string">"gpt-4o"</span>,
+  <span class="json-key">"messages"</span>: [
+    {<span class="json-key">"role"</span>: <span class="json-string">"system"</span>, <span class="json-key">"content"</span>: <span class="json-string">"You are a helpful assistant."</span>},
+    {<span class="json-key">"role"</span>: <span class="json-string">"user"</span>, <span class="json-key">"content"</span>: <span class="json-string">"Hello!"</span>}
+  ]
+}</code></pre>
+
+  <h2 class="step-header">Step 2: The Three Roles</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Role</th>
+        <th>Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="inline-code">system</span></td>
+        <td>Sets behavior/personality. The LLM follows these instructions.</td>
+      </tr>
+      <tr>
+        <td><span class="inline-code">user</span></td>
+        <td>Human input. Questions, commands, context.</td>
+      </tr>
+      <tr>
+        <td><span class="inline-code">assistant</span></td>
+        <td>The LLM's previous responses (for conversation history).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="step-header">Step 3: Real OpenAI API Call (curl)</h2>
+  <pre><code>curl https://api.openai.com/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -d '{
+    "model": "gpt-4o",
+    "messages": [
+      {"role": "system", "content": "You are a pirate. Respond in pirate speak."},
+      {"role": "user", "content": "What is 2+2?"}
+    ]
+  }'</code></pre>
+
+  <h3>Response structure:</h3>
+  <pre><code>{
+  <span class="json-key">"choices"</span>: [
+    {
+      <span class="json-key">"message"</span>: {
+        <span class="json-key">"role"</span>: <span class="json-string">"assistant"</span>,
+        <span class="json-key">"content"</span>: <span class="json-string">"Arrr! That be 4, matey!"</span>
+      }
+    }
+  ]
+}</code></pre>
+
+  <h2 class="step-header">Step 4: Real OpenAI API Call (Python)</h2>
+  <pre><code><span class="comment"># Install: pip install openai</span>
+from openai import OpenAI
+
+client = OpenAI()  <span class="comment"># Uses OPENAI_API_KEY env var</span>
+
+response = client.chat.completions.create(
+    model=<span class="json-string">"gpt-4o"</span>,
+    messages=[
+        {<span class="json-key">"role"</span>: <span class="json-string">"system"</span>, <span class="json-key">"content"</span>: <span class="json-string">"You are a helpful assistant."</span>},
+        {<span class="json-key">"role"</span>: <span class="json-string">"user"</span>, <span class="json-key">"content"</span>: <span class="json-string">"What is the capital of France?"</span>}
+    ]
+)
+
+<span class="comment"># Extract the response</span>
+answer = response.choices[0].message.content
+print(answer)  <span class="comment"># "The capital of France is Paris."</span></code></pre>
+
+  <h2 class="step-header">Step 5: Multi-Turn Conversation</h2>
+  <p>Agents maintain <strong>conversation history</strong> by appending messages:</p>
+  <pre><code>messages = [
+    {<span class="json-key">"role"</span>: <span class="json-string">"system"</span>, <span class="json-key">"content"</span>: <span class="json-string">"You are a math tutor."</span>}
+]
+
+<span class="comment"># Turn 1</span>
+messages.append({<span class="json-key">"role"</span>: <span class="json-string">"user"</span>, <span class="json-key">"content"</span>: <span class="json-string">"What is 5 * 3?"</span>})
+response = client.chat.completions.create(model=<span class="json-string">"gpt-4o"</span>, messages=messages)
+assistant_msg = response.choices[0].message.content
+messages.append({<span class="json-key">"role"</span>: <span class="json-string">"assistant"</span>, <span class="json-key">"content"</span>: assistant_msg})
+
+<span class="comment"># Turn 2 - LLM now has context from Turn 1</span>
+messages.append({<span class="json-key">"role"</span>: <span class="json-string">"user"</span>, <span class="json-key">"content"</span>: <span class="json-string">"Now divide that by 5"</span>})
+response = client.chat.completions.create(model=<span class="json-string">"gpt-4o"</span>, messages=messages)
+<span class="comment"># LLM remembers "15" and answers "3"</span></code></pre>
+
+  <div class="takeaway">
+    <strong>Key insight:</strong> The LLM is stateless. The agent must send the <strong>entire conversation</strong> each time.
+  </div>
+
+  <h2 class="step-header">Step 6: The Agent Loop Pattern</h2>
+  <pre><code>def agent_loop():
+    messages = [{<span class="json-key">"role"</span>: <span class="json-string">"system"</span>, <span class="json-key">"content"</span>: <span class="json-string">"You are a helpful assistant."</span>}]
+
+    while True:
+        user_input = input(<span class="json-string">"You: "</span>)
+        if user_input == <span class="json-string">"quit"</span>:
+            break
+
+        <span class="comment"># 1. Add user message</span>
+        messages.append({<span class="json-key">"role"</span>: <span class="json-string">"user"</span>, <span class="json-key">"content"</span>: user_input})
+
+        <span class="comment"># 2. Call LLM</span>
+        response = client.chat.completions.create(
+            model=<span class="json-string">"gpt-4o"</span>,
+            messages=messages
+        )
+
+        <span class="comment"># 3. Extract and store assistant response</span>
+        assistant_content = response.choices[0].message.content
+        messages.append({<span class="json-key">"role"</span>: <span class="json-string">"assistant"</span>, <span class="json-key">"content"</span>: assistant_content})
+
+        <span class="comment"># 4. Display to user</span>
+        print(f<span class="json-string">"Assistant: {assistant_content}"</span>)</code></pre>
+
+  <h2>Key Takeaways</h2>
+  <div class="takeaway">
+    <ol>
+      <li><strong>Messages are the interface</strong> - Everything flows through the messages array</li>
+      <li><strong>Roles define context</strong> - system (instructions), user (input), assistant (history)</li>
+      <li><strong>LLMs are stateless</strong> - Agents must track and resend full conversation</li>
+      <li><strong>The loop pattern</strong> - User input → append → call API → append response → repeat</li>
+    </ol>
+  </div>
+
+
+
+</body></html>

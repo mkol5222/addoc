@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docs</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f6f8fa;
+    --border: #d0d7de;
+    --text: #1f2328;
+    --muted: #656d76;
+    --accent: #0969da;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 4rem 1.25rem;
+  }
+  .container { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 1.75rem; font-weight: 650; letter-spacing: -0.01em; margin-bottom: .35rem; }
+  .lead { color: var(--muted); margin-bottom: 2.5rem; font-size: 1rem; }
+  ul { list-style: none; }
+  li + li { margin-top: .75rem; }
+  a.card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    transition: border-color .15s, transform .15s;
+  }
+  a.card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .card .doc-title { font-weight: 600; color: var(--accent); font-size: 1.05rem; }
+  .card .doc-desc { color: var(--muted); font-size: .9rem; margin-top: .2rem; }
+  footer { margin-top: 3rem; color: var(--muted); font-size: .8rem; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>Documents</h1>
+    <p class="lead">A small collection of published documents.</p>
+    <ul>
+      <li>
+        <a class="card" href="ai-agent-101">
+          <span class="doc-title">🤖 Jak funguje AI agent</span>
+          <span class="doc-desc">Rozbor konverzace z cpman101.md — role zpráv, reasoning, volání LLM a nástrojů</span>
+        </a>
+      </li>
+      <li>
+        <a class="card" href="how-agents-talk-to-llms">
+          <span class="doc-title">💬 How Agents Talk to LLMs</span>
+          <span class="doc-desc">Understanding API Calls, Messages, and Roles</span>
+        </a>
+      </li>
+      <li>
+        <a class="card" href="zaklady-openai-api">
+          <span class="doc-title">🔌 Základy OpenAI API</span>
+          <span class="doc-desc">Jak agenti volají LLM — ChatGPT, OpenAI-compatible API a vše kolem</span>
+        </a>
+      </li>
+    </ul>
+    <footer>addoc.klaud.online</footer>
+  </div>
+</body>
+</html>

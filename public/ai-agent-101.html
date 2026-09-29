@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<!-- saved from url=(0073)https://16155caf9980-10-244-3-14-8000.spch.r.killercoda.com/agent101.html -->
+<html lang="cs"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jak funguje AI agent — rozbor z cpman101.md</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --user: #58a6ff;
+    --assistant: #3fb950;
+    --thinking: #d29922;
+    --tool: #bc8cff;
+    --tool-input: #1f2937;
+    --tool-output: #0d2820;
+    --llm: #f0883e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Noto Sans, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 2rem 1rem;
+  }
+  .container { max-width: 1000px; margin: 0 auto; }
+
+  h1 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: .25rem;
+    background: linear-gradient(135deg, var(--user), var(--assistant), var(--tool));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .subtitle { text-align: center; color: var(--muted); margin-bottom: 2rem; font-size: .95rem; }
+  .case-study { text-align: center; margin-bottom: 2.5rem; }
+  .case-study a { color: var(--tool); }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem 1.5rem;
+    justify-content: center;
+    margin-bottom: 2.5rem;
+    padding: .75rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .legend-item { display: flex; align-items: center; gap: .4rem; font-size: .85rem; }
+  .legend-dot {
+    width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex-shrink: 0;
+  }
+
+  /* Flow diagram */
+  .flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .25rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.5rem;
+    padding: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: .8rem;
+  }
+  .flow-step {
+    display: flex; flex-direction: column; align-items: center; gap: .15rem;
+    padding: .4rem .7rem;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+  .flow-step .label { font-size: .65rem; opacity: .7; }
+  .flow-arrow { color: var(--muted); font-size: 1.1rem; padding: 0 .1rem; }
+
+  /* Info cards */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: .75rem;
+    margin-bottom: 2.5rem;
+  }
+  .info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: .9rem 1rem;
+  }
+  .info-card h3 { font-size: .85rem; margin-bottom: .35rem; }
+  .info-card h3 .badge {
+    display: inline-block;
+    font-size: .6rem;
+    padding: 1px 6px;
+    border-radius: 10px;
+    margin-left: .4rem;
+    vertical-align: middle;
+  }
+  .info-card p, .info-card ul { font-size: .8rem; color: var(--muted); }
+  .info-card ul { padding-left: 1.1rem; }
+  .info-card ul li { margin-bottom: .2rem; }
+
+  /* Conversation */
+  .msg { margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .msg-header {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .4rem .75rem;
+    font-size: .78rem;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+  }
+  .msg-header .icon { font-size: 1rem; }
+  .msg-header .meta { margin-left: auto; color: var(--muted); font-weight: 400; font-size: .72rem; }
+
+  .msg-content { padding: .75rem; font-size: .87rem; overflow-x: auto; }
+  .msg-content p { margin-bottom: .4rem; }
+  .msg-content pre {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: .6rem;
+    font-size: .78rem;
+    overflow-x: auto;
+    margin: .4rem 0;
+  }
+  .msg-content code { font-size: .8rem; }
+
+  .user-msg .msg-header { background: rgba(88,166,255,.1); }
+  .user-msg .msg-header { border-bottom-color: rgba(88,166,255,.25); }
+
+  .assistant-msg .msg-header { background: rgba(63,185,80,.1); }
+  .assistant-msg .msg-header { border-bottom-color: rgba(63,185,80,.25); }
+
+  .thinking-block {
+    background: rgba(210,153,34,.08);
+    border-left: 3px solid var(--thinking);
+    padding: .6rem .75rem;
+    margin: .5rem 0;
+    border-radius: 0 6px 6px 0;
+  }
+  .thinking-block .label {
+    font-size: .7rem; text-transform: uppercase; letter-spacing: .04em;
+    color: var(--thinking); font-weight: 700;
+    display: flex; align-items: center; gap: .35rem;
+    margin-bottom: .35rem;
+  }
+  .thinking-block .label::before { content: '\1F4AD'; font-size: .8rem; }
+
+  .tool-call {
+    background: rgba(188,140,255,.06);
+    border: 1px solid rgba(188,140,255,.2);
+    border-radius: 6px;
+    margin: .5rem 0;
+  }
+  .tool-call-header {
+    display: flex; align-items: center; gap: .4rem;
+    padding: .35rem .6rem;
+    font-size: .75rem; font-weight: 600;
+    border-bottom: 1px solid rgba(188,140,255,.15);
+    color: var(--tool);
+  }
+  .tool-call-body { padding: .5rem .6rem; }
+  .tool-call-body pre { margin: 0; }
+  .tool-output {
+    background: var(--tool-output);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: .5rem 0;
+  }
+  .tool-output-header {
+    display: flex; align-items: center; gap: .4rem;
+    padding: .35rem .6rem;
+    font-size: .75rem; font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .annotation {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    padding: .5rem .75rem;
+    margin: .5rem 0;
+    font-size: .8rem;
+  }
+  .annotation .tag {
+    display: inline-block;
+    font-size: .65rem;
+    padding: 1px 7px;
+    border-radius: 8px;
+    margin-right: .4rem;
+    font-weight: 700;
+  }
+
+  .tldr {
+    background: linear-gradient(135deg, rgba(88,166,255,.08), rgba(63,185,80,.08));
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-top: 2.5rem;
+  }
+  .tldr h3 { margin-bottom: .5rem; font-size: .95rem; }
+  .tldr ul { padding-left: 1.2rem; font-size: .85rem; color: var(--muted); }
+  .tldr ul li { margin-bottom: .25rem; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>🤖 Jak funguje AI agent</h1>
+<p class="subtitle">Rozbor konverzace z <code>cpman101.md</code> — role zpráv, reasoning, volání LLM a nástrojů</p>
+
+<div class="case-study">
+  <a href="https://16155caf9980-10-244-3-14-8000.spch.r.killercoda.com/agent101.html#conversation">↓ Přejít na rozebranou konverzaci</a>
+</div>
+
+<!-- LEGEND -->
+<div class="legend">
+  <span class="legend-item"><span class="legend-dot" style="background:var(--user)"></span> User (zadání)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--assistant)"></span> Assistant (odpověď)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--thinking)"></span> Reasoning / thinking</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--tool)"></span> Tool call (nástroj)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--tool-output)"></span> Tool output (výstup)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--llm)"></span> LLM inference</span>
+</div>
+
+<!-- FLOW DIAGRAM -->
+<div class="flow">
+  <div class="flow-step" style="background:rgba(88,166,255,.15)">
+    <span class="label">zadání</span>
+    User
+  </div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step" style="background:rgba(210,153,34,.15)">
+    <span class="label">uvnitř LLM</span>
+    Thinking / Reasoning
+  </div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step" style="background:rgba(188,140,255,.15)">
+    <span class="label">agent rozhodne</span>
+    Tool Call<br><span style="font-size:.6rem;opacity:.7">(webfetch, bash, ...)</span>
+  </div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step" style="background:rgba(13,40,32,1);border:1px solid var(--border)">
+    <span class="label">výsledek</span>
+    Tool Output
+  </div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step" style="background:rgba(240,136,62,.15)">
+    <span class="label">LLM zpracuje</span>
+    Další reasoning<br><span style="font-size:.6rem;opacity:.7">(nebo odpověď)</span>
+  </div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step" style="background:rgba(63,185,80,.15)">
+    <span class="label">výstup</span>
+    Assistant odpovídá
+  </div>
+</div>
+
+<!-- INFO CARDS -->
+<div class="info-grid">
+  <div class="info-card">
+    <h3>💬 Role: User <span class="badge" style="background:rgba(88,166,255,.2);color:var(--user)">vstup</span></h3>
+    <p>Člověk zadá instrukci přirozeným jazykem. Konverzace začíná <em>system promptem</em> (není vidět) + první user zprávou.</p>
+  </div>
+  <div class="info-card">
+    <h3>🧠 Reasoning / Thinking <span class="badge" style="background:rgba(210,153,34,.2);color:var(--thinking)">uvnitř LLM</span></h3>
+    <p>LLM interně uvažuje nahlas — analyzuje úkol, plánuje kroky, rozhoduje se, který nástroj zavolat a s jakými parametry.</p>
+  </div>
+  <div class="info-card">
+    <h3>🔨 Tool calls <span class="badge" style="background:rgba(188,140,255,.2);color:var(--tool)">akce</span></h3>
+    <p>Agent volá externí nástroje (webfetch, bash, read, grep). LLM vygeneruje JSON s názvem nástroje a parametry; runtime ho provede.</p>
+  </div>
+  <div class="info-card">
+    <h3>🌍 Tool output <span class="badge" style="background:rgba(13,40,32,1);color:#7ee787">výsledek</span></h3>
+    <p>Výstup nástroje se vloží zpět do kontextu LLM jako systémová zpráva. LLM ho zpracuje a rozhodne o dalším kroku.</p>
+  </div>
+  <div class="info-card">
+    <h3>🤖 LLM inference <span class="badge" style="background:rgba(240,136,62,.2);color:var(--llm)">jádro</span></h3>
+    <p>Každý cyklus (user → thinking → tool → output → thinking → ...) je jedna nebo více LLM inferencí.</p>
+  </div>
+  <div class="info-card">
+    <h3>🔗 Message roles <span class="badge" style="background:rgba(139,148,158,.2);color:var(--muted)">kontext</span></h3>
+    <p>Konverzace se skládá z messages s rolemi: <code>system</code>, <code>user</code>, <code>assistant</code>, <code>tool</code>. Každá má jinou váhu a chování.</p>
+  </div>
+</div>
+
+<!-- ANNOTATED CONVERSATION -->
+<h2 id="conversation" style="margin-bottom:1rem;font-size:1.2rem;">📜 Rozebraná konverzace</h2>
+
+<!-- MESSAGE 1: USER -->
+<div class="msg user-msg">
+  <div class="msg-header">
+    <span class="icon">👤</span> User
+    <span class="meta">role: user · vstup od člověka</span>
+  </div>
+  <div class="msg-content">
+    <div class="annotation"><span class="tag" style="background:rgba(88,166,255,.2);color:var(--user)">💬 User message</span>První zpráva obsahuje zadání úkolu. Systémový prompt (není v logu) definuje chování agenta — jaké má nástroje, jak má uvažovat, jak odpovídat.</div>
+    <p>toto je jazy check point management serveru ... nejprve se vyzkousej prihlasit</p>
+  </div>
+</div>
+
+<!-- MESSAGE 2: ASSISTANT (thinking + tool call + output + response) -->
+<div class="msg assistant-msg">
+  <div class="msg-header">
+    <span class="icon">🤖</span> Assistant (Build · Big Pickle · 3.2s)
+    <span class="meta">role: assistant · generuje LLM</span>
+  </div>
+  <div class="msg-content">
+
+    <div class="annotation"><span class="tag" style="background:rgba(210,153,34,.2);color:var(--thinking)">🧠 Reasoning / Thinking</span>LLM nejprve interně analyzuje úkol, aniž by cokoliv vypisovala uživateli. Tento blok není určen uživateli — je to "řetězec myšlenek" (chain-of-thought).</div>
+    <div class="thinking-block">
+      <div class="label">Thinking</div>
+      <p>The user wants me to: 1. Check the Check Point Management Server API ... 4. First, try to log in. Let me first fetch the Postman collection to understand the API structure, then try to log in.</p>
+    </div>
+
+    <div class="annotation"><span class="tag" style="background:rgba(188,140,255,.2);color:var(--tool)">🔨 Tool call</span>LLM se rozhodne zavolat nástroj <strong>webfetch</strong>. Vygeneruje JSON s parametry (url, format). Runtime (opencode) provolá API a vrátí výsledek.</div>
+    <div class="tool-call">
+      <div class="tool-call-header">📡 Tool: webfetch</div>
+      <div class="tool-call-body">
+        <pre>{
+  "url": "https://sc1.checkpoint.com/documents/latest/APIs/data/postman_collection.json",
+  "format": "text"
+}</pre>
+      </div>
+    </div>
+
+    <div class="annotation"><span class="tag" style="background:rgba(13,40,32,1);color:#7ee787">🌍 Tool output</span>Výstup nástroje (JSON response z API) se vloží do kontextu jako zpráva s rolí <code>tool</code>. LLM ho vidí a zpracovává.</div>
+    <div class="tool-output">
+      <div class="tool-output-header">📄 Output (truncated, ~5MB)</div>
+      <div class="tool-call-body">
+        <pre>{
+  "info": { "name": "Web API (version 2.1)..." },
+  "item": [{ "name": "01 Session Management", "item": [{ "name": "login", ... }] }]
+}</pre>
+      </div>
+    </div>
+
+    <div class="annotation"><span class="tag" style="background:rgba(240,136,62,.2);color:var(--llm)">🤖 LLM inference</span>Po obdržení tool output LLM znovu zpracovává kontext — vyhodnotí, co výstup obsahuje (login endpoint: POST /v2.1/login), a rozhodne se pro další krok.</div>
+
+    <div class="thinking-block">
+      <div class="label">Thinking (2. kolo)</div>
+      <p>I got the Postman collection. I can see the login endpoint is: - URL: <code>{{server}}/v2.1/login</code> - Method: POST ... The server is <code>cpman.duckdns.org</code> and credentials are <code>admin</code>/<code>demo123</code>. Let me try to log in using curl.</p>
+    </div>
+
+    <div class="tool-call">
+      <div class="tool-call-header">📡 Tool: bash</div>
+      <div class="tool-call-body">
+        <pre>curl -sk -X POST "https://cpman.duckdns.org/v2.1/login" \
+  -H "Content-Type: application/json" \
+  -d '{"user":"admin","password":"demo123"}'</pre>
+      </div>
+    </div>
+
+    <div class="tool-output">
+      <div class="tool-output-header">📄 Output (empty — 404)</div>
+      <div class="tool-call-body"><pre>(no output)</pre></div>
+    </div>
+
+    <div class="annotation"><span class="tag" style="background:rgba(210,153,34,.2);color:var(--thinking)">🧠 Reasoning</span>Prázdný výstup / 404. LLM analyzuje: "The command returned no output. Let me try with -v for verbose... maybe different port or path."</div>
+  </div>
+</div>
+
+<!-- MESSAGE 3: ASSISTANT - second attempt -->
+<div class="msg assistant-msg">
+  <div class="msg-header">
+    <span class="icon">🤖</span> Assistant (Build · Big Pickle · 3.8s)
+    <span class="meta">další LLM inference · opakovaný cyklus</span>
+  </div>
+  <div class="msg-content">
+    <div class="annotation"><span class="tag" style="background:rgba(240,136,62,.2);color:var(--llm)">🤖 LLM inference #3</span>Agent analyzuje selhání, upravuje strategii — přidá verbose flag a zkusí diagnostikovat.</div>
+    <div class="tool-call">
+      <div class="tool-call-header">📡 Tool: bash (s verbose)</div>
+      <div class="tool-call-body"><pre>host cpman.duckdns.org; curl -skv -X POST "https://cpman.duckdns.org/v2.1/login" ...</pre></div>
+    </div>
+    <div class="tool-output">
+      <div class="tool-output-header">📄 Output</div>
+      <div class="tool-call-body"><pre>cpman.duckdns.org has address 3.70.187.217
+...
+&gt; POST /v2.1/login HTTP/1.1
+&lt; HTTP/1.1 404 Not Found</pre></div>
+    </div>
+    <div class="thinking-block">
+      <div class="label">Thinking</div>
+      <p>The server is reachable, TLS handshake succeeded, but 404 Not Found. Server: CPWS. Looking at Postman response — the <code>url</code> field was <code>"https://192.0.2.1:443/web_api"</code>. Maybe the path needs <code>/web_api</code> prefix.</p>
+    </div>
+
+    <div class="annotation"><span class="tag" style="background:rgba(210,153,34,.2);color:var(--thinking)">🧠 Dedukce</span>LLM si všimne detailu v dokumentaci (url: .../web_api) a odvodí správnou cestu. To je ukázka <strong>reasoning nad tool outputem</strong>.</div>
+
+    <div class="tool-call">
+      <div class="tool-call-header">📡 Tool: bash (opravená cesta)</div>
+      <div class="tool-call-body"><pre>curl -sk -X POST "https://cpman.duckdns.org/web_api/v2.1/login" -H "Content-Type: application/json" -d '{"user":"admin","password":"demo123"}'</pre></div>
+    </div>
+    <div class="tool-output">
+      <div class="tool-output-header">📄 Output (success!)</div>
+      <div class="tool-call-body"><pre>{
+  "uid" : "47b43ee5-8350-405d-8c08-297639249777",
+  "sid" : "P46FJX6UuNAW7NMl92IiYIKo-nPMG6IrC5dNvm_tM4o",
+  "url" : "https://cpman.duckdns.org:443/web_api",
+  "session-timeout" : 600,
+  "api-server-version" : "2.1",
+  "user-name" : "admin"
+}</pre></div>
+    </div>
+
+    <div class="annotation"><span class="tag" style="background:rgba(63,185,80,.2);color:var(--assistant)">🤖 Assistant response</span>Teď LLM vygeneruje odpověď pro uživatele — česky, shrnuje výsledek. Cyklus končí: tool call → tool output → reasoning → odpověď uživateli.</div>
+    <p>Přihlášení proběhlo úspěšně. ... <code>{ "sid": "P46FJX6UuNAW7NMl92IiYIKo-nPMG6IrC5dNvm_tM4o", ... }</code></p>
+  </div>
+</div>
+
+<!-- MESSAGE 4: USER -->
+<div class="msg user-msg">
+  <div class="msg-header">
+    <span class="icon">👤</span> User
+    <span class="meta">další user message</span>
+  </div>
+  <div class="msg-content">
+    <p>ukaz objekty typu network a odhlas se</p>
+  </div>
+</div>
+
+<!-- MESSAGE 5: ASSISTANT - network objects + logout -->
+<div class="msg assistant-msg">
+  <div class="msg-header">
+    <span class="icon">🤖</span> Assistant (Build · Big Pickle · 3.2s)
+    <span class="meta">nový cyklus · user → thinking → tool → output → tool → output → odpověď</span>
+  </div>
+  <div class="msg-content">
+    <div class="thinking-block">
+      <div class="label">Thinking</div>
+      <p>The user wants me to: 1. Show objects of type "network" 2. Log out. Let me first show network objects using the session ID we got, then log out.</p>
+    </div>
+
+    <div class="annotation"><span class="tag" style="background:rgba(188,140,255,.2);color:var(--tool)">🔨 Tool call #1</span>LLM použije dříve získané session ID (P46FJX6U...) v headeru X-chkp-sid.</div>
+    <div class="tool-call">
+      <div class="tool-call-header">📡 Tool: bash — show-networks</div>
+      <div class="tool-call-body"><pre>curl -sk -X POST "https://cpman.duckdns.org/web_api/v2.1/show-networks" \
+  -H "Content-Type: application/json" \
+  -H "X-chkp-sid: P46FJX6UuNAW7NMl92IiYIKo-nPMG6IrC5dNvm_tM4o" \
+  -d '{"limit":50,"offset":0}'</pre></div>
+    </div>
+    <div class="tool-output">
+      <div class="tool-output-header">📄 Output — 12 network objects</div>
+      <div class="tool-call-body"><pre>{ "objects": [ { "name": "Branch Office LAN", "subnet4": "145.80.110.0", ... }, ... ], "total": 12 }</pre></div>
+    </div>
+
+    <div class="thinking-block">
+      <div class="label">Thinking</div>
+      <p>Good, I got the network objects. Now let me log out.</p>
+    </div>
+
+    <div class="annotation"><span class="tag" style="background:rgba(188,140,255,.2);color:var(--tool)">🔨 Tool call #2</span>Druhý tool call v rámci stejné LLM inference — agent sekvenčně plní podúkoly.</div>
+    <div class="tool-call">
+      <div class="tool-call-header">📡 Tool: bash — logout</div>
+      <div class="tool-call-body"><pre>curl -sk -X POST "https://cpman.duckdns.org/web_api/v2.1/logout" \
+  -H "Content-Type: application/json" \
+  -H "X-chkp-sid: P46FJX6UuNAW7NMl92IiYIKo-nPMG6IrC5dNvm_tM4o" \
+  -d '{}'</pre></div>
+    </div>
+    <div class="tool-output">
+      <div class="tool-output-header">📄 Output</div>
+      <div class="tool-call-body"><pre>{ "message": "OK" }</pre></div>
+    </div>
+
+    <div class="thinking-block">
+      <div class="label">Thinking</div>
+      <p>Done. Both operations succeeded. Let me summarize the results.</p>
+    </div>
+
+    <div class="annotation"><span class="tag" style="background:rgba(63,185,80,.2);color:var(--assistant)">🤖 Final response</span>LLM vygeneruje hezkou odpověď pro uživatele — tabulku network objektů + potvrzení odhlášení.</div>
+    <p>Hotovo. Na serveru je <strong>12 network objektů</strong>:<br>Branch Office LAN — 145.80.110.0/24, ...<br>Odhlášení proběhlo v pořádku (message: OK).</p>
+  </div>
+</div>
+
+<!-- TL;DR -->
+<div class="tldr">
+  <h3>💡 Shrnutí — cyklus AI agenta</h3>
+  <ul>
+    <li><strong>User message</strong> — člověk zadá úkol přirozeným jazykem.</li>
+    <li><strong>System prompt</strong> (skrytý) — definuje chování, dostupné nástroje, pravidla.</li>
+    <li><strong>Thinking / Reasoning</strong> — LLM interně analyzuje, plánuje, rozhoduje. Není určeno uživateli.</li>
+    <li><strong>Tool call</strong> — LLM vygeneruje strukturovaný JSON s názvem nástroje a parametry. Runtime (opencode) ho provede.</li>
+    <li><strong>Tool output</strong> — výsledek se vloží do kontextu jako <code>tool</code> role zpráva. LLM ho zpracuje.</li>
+    <li><strong>Dokud není úkol hotov</strong>, agent opakuje: reasoning → tool call → output → reasoning → ...</li>
+    <li><strong>Assistant response</strong> — když je úkol splněn, LLM vygeneruje finální odpověď pro uživatele.</li>
+    <li><strong>Message roles</strong> — <code>system</code> (instrukce), <code>user</code> (vstup), <code>assistant</code> (výstup LLM), <code>tool</code> (výstup nástroje). Každá má jiné chování v kontextovém okně.</li>
+  </ul>
+</div>
+
+</div>
+
+</body></html>

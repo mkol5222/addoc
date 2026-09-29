@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<!-- saved from url=(0093)https://7e69277e738f-10-244-4-185-8000.spch.r.killercoda.com/teach/01-zaklady-openai-api.html -->
+<html lang="cs"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Základy OpenAI API</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.7;
+    color: #1a1a2e;
+    background: #f8f9fa;
+    padding: 2rem 1rem;
+  }
+  .container { max-width: 860px; margin: 0 auto; }
+  h1 {
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    color: #0d7377;
+    border-bottom: 3px solid #14b8a6;
+    padding-bottom: 0.4rem;
+  }
+  h2 {
+    font-size: 1.5rem;
+    margin: 2rem 0 0.8rem;
+    color: #0f766e;
+    padding-left: 0.5rem;
+    border-left: 4px solid #14b8a6;
+  }
+  h3 {
+    font-size: 1.2rem;
+    margin: 1.5rem 0 0.5rem;
+    color: #115e59;
+  }
+  p, li { margin-bottom: 0.6rem; }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.95rem;
+  }
+  th, td {
+    border: 1px solid #d1d5db;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+  }
+  th { background: #14b8a6; color: #fff; font-weight: 600; }
+  tr:nth-child(even) { background: #f1f5f9; }
+  pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 1rem 1.2rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 1rem 0;
+  }
+  code {
+    background: #e2e8f0;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.88em;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+  }
+  .subtitle {
+    color: #64748b;
+    font-size: 1.05rem;
+    margin-bottom: 1.5rem;
+  }
+  .info {
+    background: #ecfdf5;
+    border-left: 4px solid #14b8a6;
+    padding: 0.8rem 1rem;
+    border-radius: 0 6px 6px 0;
+    margin: 1rem 0;
+  }
+  hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 2rem 0;
+  }
+  .test-otazka {
+    background: #fef9c3;
+    border-left: 4px solid #eab308;
+    padding: 0.5rem 1rem;
+    margin: 0.4rem 0;
+    border-radius: 0 4px 4px 0;
+  }
+  @media (max-width: 600px) {
+    body { padding: 1rem; }
+    h1 { font-size: 1.6rem; }
+    h2 { font-size: 1.2rem; }
+    table { font-size: 0.85rem; }
+    pre { font-size: 0.8rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Základy OpenAI API</h1>
+<p class="subtitle">Jak agenti jako opencode volají LLM — ChatGPT, OpenAI-compatible API a vše kolem</p>
+
+<h2>Co je OpenAI API?</h2>
+<p>
+  OpenAI API je rozhraní, které umožňuje programově volat jazykové modely (LLM) jako je GPT-4, GPT-4o, GPT-3.5-Turbo atd.
+  Místo psaní do ChatGPT v prohlížeči posíláte HTTP požadavky a dostáváte odpovědi v JSONu.
+</p>
+
+<hr>
+
+<h2>1. Chat Completions API (nejpoužívanější)</h2>
+
+<h3>HTTP požadavek</h3>
+<pre><code>POST https://api.openai.com/v1/chat/completions
+Authorization: Bearer &lt;YOUR_API_KEY&gt;
+Content-Type: application/json</code></pre>
+
+<h3>Tělo požadavku</h3>
+<pre><code>{
+  "model": "gpt-4o",
+  "messages": [
+    {"role": "system", "content": "Jsi užitečný asistent."},
+    {"role": "user", "content": "Kolik je 2+2?"}
+  ],
+  "temperature": 0.7,
+  "max_tokens": 100
+}</code></pre>
+
+<h3>Odpověď</h3>
+<pre><code>{
+  "id": "chatcmpl-...",
+  "object": "chat.completion",
+  "choices": [{
+    "index": 0,
+    "message": {
+      "role": "assistant",
+      "content": "2+2 = 4"
+    },
+    "finish_reason": "stop"
+  }],
+  "usage": {
+    "prompt_tokens": 25,
+    "completion_tokens": 5,
+    "total_tokens": 30
+  }
+}</code></pre>
+
+<h3>Minimální volání v Pythonu</h3>
+<pre><code><span style="color:#94a3b8">from</span> openai <span style="color:#94a3b8">import</span> OpenAI
+
+client <span style="color:#94a3b8">=</span> OpenAI(api_key<span style="color:#94a3b8">=</span><span style="color:#a5d6ff">"sk-..."</span>)
+
+response <span style="color:#94a3b8">=</span> client.chat.completions.create(
+    model<span style="color:#94a3b8">=</span><span style="color:#a5d6ff">"gpt-4o"</span>,
+    messages<span style="color:#94a3b8">=</span>[
+        {<span style="color:#a5d6ff">"role"</span>: <span style="color:#a5d6ff">"user"</span>, <span style="color:#a5d6ff">"content"</span>: <span style="color:#a5d6ff">"Kolik je 2+2?"</span>}
+    ]
+)
+
+<span style="color:#c084fc">print</span>(response.choices[<span style="color:#facc15">0</span>].message.content)
+<span style="color:#94a3b8"># Vypíše: 2+2 = 4</span></code></pre>
+
+<h3>Minimální volání v curl</h3>
+<pre><code>curl https://api.openai.com/v1/chat/completions \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o",
+    "messages": [{"role": "user", "content": "Kolik je 2+2?"}]
+  }'</code></pre>
+
+<hr>
+
+<h2>2. Streaming (jak to dělají agenti jako opencode)</h2>
+<p>
+  Agenti <strong>neposílají</strong> jeden request a nečekají na celou odpověď.
+  Místo toho <strong>streamují</strong> odpověď znak po znaku — vidíte text přicházet postupně, jako když ChatGPT píše.
+</p>
+
+<h3>Streaming v Pythonu</h3>
+<pre><code><span style="color:#94a3b8">from</span> openai <span style="color:#94a3b8">import</span> OpenAI
+
+client <span style="color:#94a3b8">=</span> OpenAI()
+
+stream <span style="color:#94a3b8">=</span> client.chat.completions.create(
+    model<span style="color:#94a3b8">=</span><span style="color:#a5d6ff">"gpt-4o"</span>,
+    messages<span style="color:#94a3b8">=</span>[{<span style="color:#a5d6ff">"role"</span>: <span style="color:#a5d6ff">"user"</span>, <span style="color:#a5d6ff">"content"</span>: <span style="color:#a5d6ff">"Napiš krátkou básničku."</span>}],
+    stream<span style="color:#94a3b8">=</span><span style="color:#a5d6ff">True</span>
+)
+
+<span style="color:#94a3b8">for</span> chunk <span style="color:#94a3b8">in</span> stream:
+    <span style="color:#94a3b8">if</span> chunk.choices[<span style="color:#facc15">0</span>].delta.content <span style="color:#94a3b8">is not</span> <span style="color:#a5d6ff">None</span>:
+        <span style="color:#c084fc">print</span>(chunk.choices[<span style="color:#facc15">0</span>].delta.content, end<span style="color:#94a3b8">=</span><span style="color:#a5d6ff">""</span>)</code></pre>
+
+<p>Každý <code>chunk</code> obsahuje kousek textu v <code>delta.content</code>. Agenti tyhle kousky skládají dohromady a rovnou je zobrazují uživateli.</p>
+
+<hr>
+
+<h2>3. OpenAI-compatible API (důležité pro open source)</h2>
+<p>OpenAI API se stalo <strong>standardem</strong>. Díky tomu můžete stejný kód použít pro:</p>
+
+<table>
+  <thead>
+    <tr><th>Poskytovatel</th><th>Base URL</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>OpenAI</td><td><code>https://api.openai.com/v1</code></td></tr>
+    <tr><td>Anthropic (Claude)</td><td><code>https://api.anthropic.com</code> (vlastní API, ale OpenAI wrapper existuje)</td></tr>
+    <tr><td>Groq (Llama, Mixtral)</td><td><code>https://api.groq.com/openai/v1</code></td></tr>
+    <tr><td>Ollama (lokálně)</td><td><code>http://localhost:11434/v1</code></td></tr>
+    <tr><td>Together AI</td><td><code>https://api.together.xyz/v1</code></td></tr>
+    <tr><td>DeepSeek</td><td><code>https://api.deepseek.com/v1</code></td></tr>
+    <tr><td>OpenRouter</td><td><code>https://openrouter.ai/api/v1</code></td></tr>
+    <tr><td>LocalAI, vLLM, TGI</td><td>lokální server</td></tr>
+  </tbody>
+</table>
+
+<h3>Jak se mění base_url</h3>
+<pre><code><span style="color:#94a3b8">from</span> openai <span style="color:#94a3b8">import</span> OpenAI
+
+<span style="color:#94a3b8"># OpenAI</span>
+client <span style="color:#94a3b8">=</span> OpenAI(api_key<span style="color:#94a3b8">=</span><span style="color:#a5d6ff">"sk-..."</span>)
+
+<span style="color:#94a3b8"># Ollama (lokálně)</span>
+client <span style="color:#94a3b8">=</span> OpenAI(
+    base_url<span style="color:#94a3b8">=</span><span style="color:#a5d6ff">"http://localhost:11434/v1"</span>,
+    api_key<span style="color:#94a3b8">=</span><span style="color:#a5d6ff">"ollama"</span>
+)
+
+<span style="color:#94a3b8"># Groq</span>
+client <span style="color:#94a3b8">=</span> OpenAI(
+    base_url<span style="color:#94a3b8">=</span><span style="color:#a5d6ff">"https://api.groq.com/openai/v1"</span>,
+    api_key<span style="color:#94a3b8">=</span><span style="color:#a5d6ff">"gsk_..."</span>
+)</code></pre>
+
+<p>Zbytek kódu (volání <code>chat.completions.create</code>) zůstává <strong>stejný</strong>.</p>
+
+<hr>
+
+<h2>4. Parametry API</h2>
+
+<table>
+  <thead>
+    <tr><th>Parametr</th><th>Co dělá</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>model</code></td><td>Který model použít (<code>gpt-4o</code>, <code>gpt-4o-mini</code>, ...)</td></tr>
+    <tr><td><code>messages</code></td><td>Pole zpráv — konverzace</td></tr>
+    <tr><td><code>temperature</code></td><td>Kreativita (0.0 = deterministický, 1.0 = kreativní, 2.0 = šílený)</td></tr>
+    <tr><td><code>max_tokens</code></td><td>Maximální délka odpovědi</td></tr>
+    <tr><td><code>top_p</code></td><td>Nucleus sampling (alternativa k temperature)</td></tr>
+    <tr><td><code>frequency_penalty</code></td><td>Penalizace opakování (-2.0 až 2.0)</td></tr>
+    <tr><td><code>presence_penalty</code></td><td>Penalizace za nová témata (-2.0 až 2.0)</td></tr>
+    <tr><td><code>stop</code></td><td>Sekvence, při kterých přestat generovat</td></tr>
+    <tr><td><code>stream</code></td><td><code>true</code> = streamovat odpověď</td></tr>
+    <tr><td><code>tools</code></td><td>Definice nástrojů/funkcí (function calling)</td></tr>
+  </tbody>
+</table>
+
+<h3>Roles v messages</h3>
+<table>
+  <thead>
+    <tr><th>Role</th><th>Význam</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>system</code></td><td>Instrukce pro model jak se má chovat</td></tr>
+    <tr><td><code>user</code></td><td>Zpráva od uživatele</td></tr>
+    <tr><td><code>assistant</code></td><td>Odpověď modelu (důležité pro kontext)</td></tr>
+    <tr><td><code>tool</code></td><td>Výsledek volání nástroje (function calling)</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>5. Function Calling (nástroje v agentech)</h2>
+<p>
+  Agenti jako opencode nepíšou jen text — <strong>volají nástroje</strong>.
+  Model vrátí JSON místo textu a agent ho zpracuje.
+</p>
+
+<h3>Definice nástroje</h3>
+<pre><code>tools <span style="color:#94a3b8">=</span> [
+    {
+        <span style="color:#a5d6ff">"type"</span>: <span style="color:#a5d6ff">"function"</span>,
+        <span style="color:#a5d6ff">"function"</span>: {
+            <span style="color:#a5d6ff">"name"</span>: <span style="color:#a5d6ff">"get_weather"</span>,
+            <span style="color:#a5d6ff">"description"</span>: <span style="color:#a5d6ff">"Získej aktuální počasí pro město"</span>,
+            <span style="color:#a5d6ff">"parameters"</span>: {
+                <span style="color:#a5d6ff">"type"</span>: <span style="color:#a5d6ff">"object"</span>,
+                <span style="color:#a5d6ff">"properties"</span>: {
+                    <span style="color:#a5d6ff">"location"</span>: {
+                        <span style="color:#a5d6ff">"type"</span>: <span style="color:#a5d6ff">"string"</span>,
+                        <span style="color:#a5d6ff">"description"</span>: <span style="color:#a5d6ff">"Město a stát, např. Praha, ČR"</span>
+                    }
+                },
+                <span style="color:#a5d6ff">"required"</span>: [<span style="color:#a5d6ff">"location"</span>]
+            }
+        }
+    }
+]</code></pre>
+
+<h3>Volání s nástroji</h3>
+<pre><code>response <span style="color:#94a3b8">=</span> client.chat.completions.create(
+    model<span style="color:#94a3b8">=</span><span style="color:#a5d6ff">"gpt-4o"</span>,
+    messages<span style="color:#94a3b8">=</span>[{<span style="color:#a5d6ff">"role"</span>: <span style="color:#a5d6ff">"user"</span>, <span style="color:#a5d6ff">"content"</span>: <span style="color:#a5d6ff">"Jaké je počasí v Praze?"</span>}],
+    tools<span style="color:#94a3b8">=</span>tools,
+    tool_choice<span style="color:#94a3b8">=</span><span style="color:#a5d6ff">"auto"</span>
+)
+
+<span style="color:#94a3b8"># Pokud se model rozhodne zavolat nástroj:</span>
+<span style="color:#94a3b8">if</span> response.choices[<span style="color:#facc15">0</span>].message.tool_calls:
+    tool_call <span style="color:#94a3b8">=</span> response.choices[<span style="color:#facc15">0</span>].message.tool_calls[<span style="color:#facc15">0</span>]
+    <span style="color:#c084fc">print</span>(tool_call.function.name)       <span style="color:#94a3b8"># "get_weather"</span>
+    <span style="color:#c084fc">print</span>(tool_call.function.arguments)  <span style="color:#94a3b8"># '{"location": "Praha, ČR"}'</span></code></pre>
+
+<h3>Agentí loop (zjednodušeně)</h3>
+<pre><code><span style="color:#facc15">1.</span> Pošli messages modelu (včetně tool definitions)
+<span style="color:#facc15">2.</span> Model vrátí buď text, nebo tool_call
+<span style="color:#facc15">3.</span> Pokud tool_call → zavolej funkci, přidej result jako message s role "tool"
+<span style="color:#facc15">4.</span> Pošli vše znovu modelu (včetně tool resultu)
+<span style="color:#facc15">5.</span> Opakuj, dokud model nevrátí text (nebo dokud není dosažen limit)</code></pre>
+
+<div class="info">Tento cyklus je jádrem všech LLM agentů — včetně opencode.</div>
+
+<hr>
+
+<h2>6. Rate Limiting a error handling</h2>
+<pre><code><span style="color:#94a3b8">import</span> time
+<span style="color:#94a3b8">from</span> openai <span style="color:#94a3b8">import</span> OpenAI
+
+client <span style="color:#94a3b8">=</span> OpenAI()
+
+<span style="color:#94a3b8">def</span> <span style="color:#facc15">safe_call</span>(messages, max_retries<span style="color:#94a3b8">=</span><span style="color:#facc15">3</span>):
+    <span style="color:#94a3b8">for</span> attempt <span style="color:#94a3b8">in</span> <span style="color:#c084fc">range</span>(max_retries):
+        <span style="color:#94a3b8">try</span>:
+            <span style="color:#94a3b8">return</span> client.chat.completions.create(
+                model<span style="color:#94a3b8">=</span><span style="color:#a5d6ff">"gpt-4o"</span>,
+                messages<span style="color:#94a3b8">=</span>messages
+            )
+        <span style="color:#94a3b8">except</span> openai.RateLimitError:
+            wait <span style="color:#94a3b8">=</span> <span style="color:#facc15">2</span> <span style="color:#94a3b8">**</span> attempt
+            <span style="color:#c084fc">print</span>(<span style="color:#a5d6ff">f"Rate limited, čekám {wait}s..."</span>)
+            time.sleep(wait)
+        <span style="color:#94a3b8">except</span> openai.APIError <span style="color:#94a3b8">as</span> e:
+            <span style="color:#c084fc">print</span>(<span style="color:#a5d6ff">f"API error: {e}"</span>)
+            <span style="color:#94a3b8">raise</span>
+
+    <span style="color:#94a3b8">raise</span> Exception(<span style="color:#a5d6ff">"Max retries exceeded"</span>)</code></pre>
+
+<hr>
+
+<h2>7. Jak to používá opencode?</h2>
+<p>
+  Opencode (stejně jako Claude Code, Cursor, Windsurf, atd.):
+</p>
+<ol>
+  <li><strong>Nemá pevně daný API endpoint</strong> — uživatel nakonfiguruje <code>provider</code> v <code>opencode.json</code></li>
+  <li><strong>Používá OpenAI-compatible API</strong> — stačí změnit <code>base_url</code> a <code>api_key</code> a jede to s jakýmkoli modelem</li>
+  <li><strong>Streamuje odpovědi</strong> — aby uživatel viděl text v reálném čase</li>
+  <li><strong>Používá function calling</strong> — pro čtení souborů, spouštění bash příkazů, atd.</li>
+  <li><strong>Udržuje konverzační kontext</strong> — posílá celou historii zpráv (až do limitu kontextového okna)</li>
+</ol>
+
+<h3>Ukázka konfigurace pro OpenAI-compatible provider</h3>
+<pre><code>{
+  "provider": {
+    "name": "my-custom",
+    "apiKey": "sk-...",
+    "baseUrl": "https://api.openai.com/v1"
+  }
+}</code></pre>
+
+<h3>Pro Ollama (lokální)</h3>
+<pre><code>{
+  "provider": {
+    "name": "ollama",
+    "apiKey": "ollama",
+    "baseUrl": "http://localhost:11434/v1"
+  }
+}</code></pre>
+
+<hr>
+
+<h2>8. Tokeny a ceny</h2>
+<ul>
+  <li><strong>Tokeny</strong> — model nečte písmena, ale tokeny (~0.75 slova na token pro češtinu)</li>
+  <li><strong>Input tokens</strong> = to co pošlete (messages, system prompt, tools)</li>
+  <li><strong>Output tokens</strong> = to co model vygeneruje</li>
+</ul>
+
+<table>
+  <thead>
+    <tr><th>Model</th><th>Input (za 1M tokenů)</th><th>Output (za 1M tokenů)</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>gpt-4o</code></td><td>$2.50</td><td>$10.00</td></tr>
+    <tr><td><code>gpt-4o-mini</code></td><td>$0.15</td><td>$0.60</td></tr>
+  </tbody>
+</table>
+
+<br>
+
+<hr>
+
+<h2>Rychlý test</h2>
+
+<div class="test-otazka"><strong>1.</strong> Jaký HTTP požadavek pošleš na ChatGPT API?</div>
+<div class="test-otazka"><strong>2.</strong> Jaký je rozdíl mezi <code>stream: false</code> a <code>stream: true</code>?</div>
+<div class="test-otazka"><strong>3.</strong> Co se stane, když změníš <code>temperature</code> z 0.0 na 1.0?</div>
+<div class="test-otazka"><strong>4.</strong> K čemu slouží <code>tools</code> v API volání?</div>
+<div class="test-otazka"><strong>5.</strong> Jak donutíš klientskou knihovnu mluvit na Ollamu místo OpenAI?</div>
+
+<br>
+<hr>
+<p style="color: #64748b; font-size: 0.9rem; text-align: center;">
+  Vytvořeno pro /teach • OpenAI API • Červen 2026
+</p>
+
+</div>
+
+
+</body></html>
