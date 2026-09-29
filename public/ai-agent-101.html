@@ -209,9 +209,32 @@
   .tldr h3 { margin-bottom: .5rem; font-size: .95rem; }
   .tldr ul { padding-left: 1.2rem; font-size: .85rem; color: var(--muted); }
   .tldr ul li { margin-bottom: .25rem; }
+
+  /* Fullscreen toggle */
+  .fullscreen-toggle {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1000;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .fullscreen-toggle:hover { background: var(--border); border-color: var(--muted); }
 </style>
 </head>
 <body>
+<button class="fullscreen-toggle" id="fullscreenToggle" type="button" title="Přepnout na celou obrazovku" aria-label="Přepnout na celou obrazovku">⛶</button>
 <div class="container">
 
 <h1>🤖 Jak funguje AI agent</h1>
@@ -495,5 +518,29 @@
 </div>
 
 </div>
+
+<script>
+  (function () {
+    var btn = document.getElementById('fullscreenToggle');
+    if (!btn) return;
+    function isFullscreen() {
+      return !!(document.fullscreenElement || document.webkitFullscreenElement);
+    }
+    function updateIcon() {
+      btn.textContent = isFullscreen() ? '⤢' : '⛶';
+      btn.title = isFullscreen() ? 'Ukončit celou obrazovku' : 'Přepnout na celou obrazovku';
+    }
+    btn.addEventListener('click', function () {
+      if (!isFullscreen()) {
+        var el = document.documentElement;
+        (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+      } else {
+        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      }
+    });
+    document.addEventListener('fullscreenchange', updateIcon);
+    document.addEventListener('webkitfullscreenchange', updateIcon);
+  })();
+</script>
 
 </body></html>
