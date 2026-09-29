@@ -21,6 +21,10 @@ Cloudflare Pages serves clean URLs, so `public/my-doc.html` is reachable
 at `https://addoc.klaud.online/my-doc`. Unknown paths fall back to
 `index.html` (SPA fallback configured on the Pages project).
 
+The footer of `public/index.html` contains `{{BUILD_TIME}}` /
+`{{BUILD_COMMIT}}` placeholders that are stamped in at deploy time (see
+below) — don't edit those by hand.
+
 ## Adding a new document
 
 1. Add the new `public/<slug>.html` file (self-contained HTML/CSS, no
@@ -40,8 +44,12 @@ to the `addoc` Pages project.
 
 ```bash
 npx wrangler login          # only if not already authenticated
-npx wrangler pages deploy public --project-name=addoc
+./scripts/deploy.sh         # stamps footer with build time/commit and deploys
 ```
+
+The script copies `public/` into a gitignored `dist/`, fills in the
+footer's build timestamp and short commit id, and runs
+`wrangler pages deploy dist --project-name=addoc`.
 
 ## Local preview
 

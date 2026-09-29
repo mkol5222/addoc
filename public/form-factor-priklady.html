@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Form factor: od dotazu v prohlížeči po autonomní agenty</title>
+<style>
+  :root{
+    --bg: #15101a;
+    --panel: #1f1725;
+    --panel-2: #241b2c;
+    --line: #362a3f;
+    --berry: #ee0c5d;
+    --berry-dim: rgba(238,12,93,0.28);
+    --text: #f2eef4;
+    --muted: #a698ac;
+    --muted-2: #6f6178;
+    --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: radial-gradient(1100px 650px at 10% -10%, #2a1c33 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: var(--sans);
+    padding: 30px 20px 60px;
+    display:flex;
+    justify-content:center;
+  }
+  .wrap{ width:100%; max-width: 980px; }
+
+  h1{
+    font-size: clamp(1.4rem, 2.8vw, 1.95rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+    line-height:1.2;
+  }
+  .lead{
+    color: var(--muted);
+    font-size: 0.97rem;
+    max-width: 66ch;
+    line-height: 1.55;
+    margin: 0 0 18px;
+  }
+
+  .spectrum{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size: 0.72rem; color: var(--muted-2); margin-bottom: 4px;
+  }
+  .spectrum-bar{
+    height: 6px; border-radius: 4px;
+    background: linear-gradient(90deg, var(--berry), var(--muted-2));
+    margin-bottom: 30px;
+  }
+
+  .toggle-row{
+    display:flex; align-items:center; gap:10px; margin-bottom: 30px;
+  }
+  .toggle-row button{
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    font-weight:600;
+    color: var(--text);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 9px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .toggle-row button.on{ background: var(--berry); border-color: var(--berry); }
+  .toggle-row .hint{ font-size: 0.8rem; color: var(--muted-2); }
+
+  .nav-row{
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    margin-bottom: 6px;
+  }
+  .nav-btn{
+    font-family: var(--sans); font-size: 0.85rem; font-weight:600; color: var(--text);
+    background: var(--panel); border: 1px solid var(--line); padding: 10px 18px;
+    border-radius: 8px; cursor: pointer; white-space:nowrap;
+  }
+  .nav-btn:hover:not(:disabled){ border-color: var(--berry); }
+  .nav-btn:disabled{ opacity: 0.35; cursor: default; }
+  .page-indicator{
+    font-family: var(--mono); font-size: 0.78rem; color: var(--muted); letter-spacing: 0.03em;
+  }
+  .dots{ display:flex; justify-content:center; gap:8px; margin: 4px 0 18px; }
+  .dot-btn{
+    width:9px; height:9px; border-radius:50%; border: none; background: var(--line);
+    cursor: pointer; padding:0;
+  }
+  .dot-btn.active{ background: var(--berry); width:22px; border-radius:5px; }
+  .kbd-hint{ text-align:center; font-size: 0.72rem; color: var(--muted-2); margin: -6px 0 26px; }
+  .kbd-hint kbd{
+    font-family: var(--mono); border:1px solid var(--line); border-radius:4px; padding:1px 6px;
+    background: var(--panel);
+  }
+
+  .stage{ display:none; padding: 6px 0 10px; }
+  .stage.active{ display:block; }
+
+  .stage-head{
+    display:flex; align-items:baseline; gap:12px; margin-bottom: 6px; flex-wrap:wrap;
+  }
+  .stage-num{
+    font-family: var(--mono); font-size: 0.85rem; color: var(--berry); font-weight:700;
+  }
+  .stage-title{ font-size: 1.15rem; font-weight:700; margin:0; }
+  .stage-badges{ display:flex; gap:8px; margin-left:auto; flex-wrap:wrap; }
+  .badge{
+    font-size: 0.7rem; font-weight:600; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px;
+    white-space: nowrap;
+  }
+  .badge.on{ color: var(--text); border-color: var(--berry); background: rgba(238,12,93,0.12); }
+
+  .stage-desc{ color: var(--muted); font-size: 0.9rem; margin: 0 0 16px; max-width: 68ch; line-height:1.5; }
+
+  .mockups{
+    display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start;
+  }
+  .win{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+    flex: 1 1 560px;
+    min-width: 280px;
+  }
+  .win.third{ flex: 1 1 280px; }
+  .chrome{
+    display:flex; align-items:center; gap:8px;
+    padding: 9px 12px;
+    background: #17111c;
+    border-bottom: 1px solid var(--line);
+  }
+  .dot{ width:9px; height:9px; border-radius:50%; }
+  .dot.r{ background:#ff5f56; } .dot.y{ background:#ffbd2e; } .dot.g{ background:#27c93f; }
+  .chrome-title{
+    font-size: 0.72rem; color: var(--muted-2); margin-left: 6px; font-family: var(--mono);
+  }
+  .urlbar{
+    margin-left: 8px; background: #2a2130; border-radius: 6px; padding: 3px 10px;
+    font-size: 0.68rem; color: var(--muted-2); font-family: var(--mono);
+    flex: 1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+
+  /* --- 1. Web chat --- */
+  .chatweb-body{ background:#faf9fb; padding: 16px; color:#2c2c33; }
+  .msg{ margin-bottom: 12px; font-size: 0.82rem; line-height:1.5; }
+  .msg.user{ display:flex; justify-content:flex-end; }
+  .msg.user .bubble{ background:#eceaf0; border-radius: 12px 12px 2px 12px; padding: 9px 13px; max-width: 78%; }
+  .msg.assistant .bubble{ max-width: 90%; }
+  .msg.assistant .who{ display:flex; align-items:center; gap:6px; font-size:0.68rem; color:#8a8a92; margin-bottom:4px; font-weight:600; }
+  .who-dot{ width:14px; height:14px; border-radius:50%; background:#10a37f; flex-shrink:0; }
+  .code-snip{
+    background:#1e1e24; color:#d8d8e0; font-family: var(--mono); font-size:0.72rem;
+    border-radius: 8px; padding: 10px 12px; margin: 6px 0; overflow-x:auto; line-height:1.5;
+  }
+
+  /* --- 2. Desktop app --- */
+  .desktop-body{ padding: 16px; }
+  .attach-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom: 10px; }
+  .chip{
+    display:flex; align-items:center; gap:6px;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 7px;
+    padding: 5px 10px; font-size: 0.7rem; color: var(--muted); font-family: var(--mono);
+  }
+  .chip svg{ width:12px; height:12px; flex-shrink:0; }
+  .desktop-body .msg.user .bubble{ background: var(--panel-2); color: var(--text); }
+  .desktop-body .msg.assistant{ color: var(--text); }
+  .desktop-body .msg.assistant .who{ color: var(--muted-2); }
+  .desktop-body .who-dot{ background: var(--berry); }
+  .findings{ margin: 8px 0 0; padding-left: 18px; font-size: 0.8rem; color: var(--text); line-height:1.6; }
+  .findings li b{ color: var(--berry); }
+
+  /* --- 3. Terminal --- */
+  .term-body{
+    background: #0c0a10; color:#d7d3de; font-family: var(--mono); font-size: 0.76rem;
+    padding: 16px; line-height: 1.75; overflow-x:auto;
+  }
+  .term-prompt{ color:#8f8698; }
+  .term-line{ white-space:pre; }
+  .term-bullet{ color: var(--berry); }
+  .term-warn{ color:#ffb454; }
+  .term-ok{ color:#5fd08a; }
+
+  /* --- 4. Headless console --- */
+  .log-body{
+    background: #0e0f16; color:#c7cdd6; font-family: var(--mono); font-size: 0.74rem;
+    padding: 16px; line-height: 2; overflow-x:auto;
+  }
+  .log-time{ color:#586170; margin-right:10px; }
+  .log-agent{ color: var(--berry); }
+  .log-ok{ color:#5fd08a; }
+
+  /* --- 5. Platform trio --- */
+  .n8n-body{ background:#fff9f6; padding:16px; min-height:190px; position:relative; }
+  .n8n-node{
+    background:#fff; border:1.5px solid #ffb8a8; border-radius:8px; padding:8px 10px;
+    font-size:0.68rem; color:#8a4a3a; font-weight:600; position:absolute; width:118px;
+    box-shadow:0 3px 8px rgba(0,0,0,0.06);
+  }
+  .n8n-node .k{ display:block; font-size:0.6rem; color:#c17a5f; font-weight:700; margin-bottom:2px; }
+  .n8n-svg{ position:absolute; inset:0; width:100%; height:100%; }
+  .n8n-svg path{ stroke:#ffb8a8; stroke-width:1.6; fill:none; }
+
+  .copilot-body{ background:#f4f6fb; padding:16px; color:#242832; }
+  .copilot-body .msg.user .bubble{ background:#e6e9f5; }
+  .copilot-body .who-dot{ background:#4f6bed; }
+  .cite-chip{
+    display:inline-flex; align-items:center; gap:4px; background:#eef0fb; border:1px solid #d7dcf5;
+    border-radius:6px; padding:2px 7px; font-size:0.62rem; color:#4f5b8a; margin-top:6px; font-family: var(--mono);
+  }
+  .quick-actions{ display:flex; gap:6px; margin-top:8px; }
+  .qa-btn{ font-size:0.65rem; border:1px solid #d7dcf5; background:#fff; border-radius:6px; padding:4px 9px; color:#4f6bed; font-weight:600; }
+
+  .aws-body{
+    background:#0f1b2d; color:#cdd8e3; font-family: var(--mono); font-size:0.72rem;
+    padding:16px; line-height:1.9;
+  }
+  .aws-tag{ color:#ff9900; font-weight:700; }
+  .aws-role{ color:#7fb3ff; }
+
+  .stage-note{
+    margin-top: 14px;
+    background: var(--panel-2);
+    border-left: 3px solid var(--berry);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    font-size: 0.83rem;
+    color: var(--text);
+    line-height: 1.5;
+    display:none;
+  }
+  .stage-note.show{ display:block; }
+  .stage-note b{ color: var(--berry); }
+
+  .win-label{ padding: 8px 12px 0; font-size:0.68rem; color: var(--muted-2); font-weight:600; }
+
+  @media (max-width: 640px){
+    .win{ flex-basis: 100%; }
+    .stage-badges{ margin-left:0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Form factor: od dotazu v prohlížeči po autonomní agenty</h1>
+  <p class="lead">Pět reálných způsobů, jak dnes lidi a systémy používají AI — a co se s bezpečnostním dohledem stane na každém z nich. Konkrétní úkol, konkrétní obrazovka.</p>
+
+  <div class="spectrum">
+    <span>Human in the loop</span>
+    <span>No human present</span>
+  </div>
+  <div class="spectrum-bar"></div>
+
+  <div class="toggle-row">
+    <button id="noteToggle">Zobrazit bezpečnostní poznámky</button>
+    <span class="hint">— co se na každém stupni mění z pohledu dohledu a rizika</span>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn" id="prevBtn">← Předchozí</button>
+    <span class="page-indicator" id="pageIndicator">01 / 05</span>
+    <button class="nav-btn" id="nextBtn">Další →</button>
+  </div>
+  <div class="dots" id="dots"></div>
+  <p class="kbd-hint">Procházet jde i klávesnicí: <kbd>←</kbd> <kbd>→</kbd></p>
+
+  <!-- STAGE 1 : WEB CHAT -->
+  <section class="stage">
+    <div class="stage-head">
+      <span class="stage-num">01</span>
+      <h2 class="stage-title">Web chat</h2>
+      <div class="stage-badges">
+        <span class="badge on">Human in the loop</span>
+        <span class="badge">Provedení: vzdálené</span>
+      </div>
+    </div>
+    <p class="stage-desc">Prohlížeč, veřejný účet, žádná integrace na firemní data. Nejnižší bariéra vstupu — a taky nejméně viditelné pro firmu.</p>
+
+    <div class="mockups">
+      <div class="win">
+        <div class="chrome">
+          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <span class="urlbar">chatgpt.com</span>
+        </div>
+        <div class="chatweb-body">
+          <div class="msg user"><div class="bubble">Support říká, že tenhle PowerShell v příloze e-mailu vypadá podezřele, umíš mi říct, co dělá?</div></div>
+          <div class="code-snip">powershell -nop -w hidden -enc JABjAD0AJwBoAHQAdABwADoALwAvADkAMwAuADEANwA4AC4A...</div>
+          <div class="msg assistant">
+            <div class="who"><span class="who-dot"></span>ChatGPT</div>
+            <div class="bubble">Po dekódování jde o vzor stáhni-a-spusť: skript si vyžádá payload z externí IP a spustí ho v paměti. Tohle je typické pro droppery infostealerů. Bez dalšího kontextu nemůžu potvrdit záměr, ale doporučuju to nespouštět a nahlásit SOC.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="stage-note"><b>Bezpečnostní úhel:</b> rychlá a užitečná odpověď — ale úryvek z firemní pošty právě opustil perimetr přes osobní účet, bez DLP a bez záznamu, že se to stalo.</div>
+  </section>
+
+  <!-- STAGE 2 : DESKTOP APP -->
+  <section class="stage">
+    <div class="stage-head">
+      <span class="stage-num">02</span>
+      <h2 class="stage-title">Desktop app</h2>
+      <div class="stage-badges">
+        <span class="badge on">Human in the loop</span>
+        <span class="badge">Vlastní TLS stack, čte lokální soubory</span>
+      </div>
+    </div>
+    <p class="stage-desc">Claude Desktop / ChatGPT Desktop (Codex). Pořád jedna interaktivní session s člověkem u klávesnice — ale model teď sahá přímo na disk.</p>
+
+    <div class="mockups">
+      <div class="win">
+        <div class="chrome">
+          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <span class="chrome-title">Desktop app</span>
+        </div>
+        <div class="desktop-body">
+          <div class="attach-row">
+            <span class="chip">📄 firewall-export-1.txt</span>
+            <span class="chip">📄 firewall-export-2.txt</span>
+            <span class="chip">📄 segmentation-policy.pdf</span>
+          </div>
+          <div class="msg user"><div class="bubble">Zkontroluj tyhle 3 exporty pravidel a najdi konflikty s naší segmentační politikou.</div></div>
+          <div class="msg assistant">
+            <div class="who"><span class="who-dot"></span>Assistant · čte lokální soubory</div>
+            <ul class="findings">
+              <li>Pravidlo <b>#212</b> povoluje provoz VLAN10 → VLAN40 — porušuje oddíl 3.2 politiky</li>
+              <li>Pravidlo <b>#87</b> je duplicitní se záznamem v druhém exportu</li>
+              <li>2 pravidla bez vlastníka — navrhuji revizi při dalším review</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="stage-note"><b>Bezpečnostní úhel:</b> soubory se čtou z disku uživatele, ne přes upload do prohlížeče — jiný povrch než web chat, i když je to pořád jedna schválená interakce.</div>
+  </section>
+
+  <!-- STAGE 3 : CODING HARNESS -->
+  <section class="stage">
+    <div class="stage-head">
+      <span class="stage-num">03</span>
+      <h2 class="stage-title">Coding harness</h2>
+      <div class="stage-badges">
+        <span class="badge on">Human in the loop (review PR)</span>
+        <span class="badge">Repo kontext opouští endpoint</span>
+      </div>
+    </div>
+    <p class="stage-desc">Claude Code a podobné TUI. Žádné GUI — jen terminál se shellem, gitem a psacím přístupem do repozitáře.</p>
+
+    <div class="mockups">
+      <div class="win">
+        <div class="chrome">
+          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <span class="chrome-title">claude — zsh — 100×32</span>
+        </div>
+        <div class="term-body">
+<div class="term-line"><span class="term-prompt">&gt;</span> Zkontroluj Terraform pro naše AWS security groups, najdi pravidla otevřená na 0.0.0.0/0 a otevři PR s opravou.</div>
+<div class="term-line"></div>
+<div class="term-line"><span class="term-bullet">⏺</span> Prohledávám repozitář…</div>
+<div class="term-line"><span class="term-bullet">⏺</span> modules/network/sg.tf:44 — ingress 0.0.0.0/0:22 (SSH) <span class="term-warn">RIZIKOVÉ</span></div>
+<div class="term-line"><span class="term-bullet">⏺</span> modules/network/sg.tf:61 — ingress 0.0.0.0/0:3389 (RDP) <span class="term-warn">RIZIKOVÉ</span></div>
+<div class="term-line"><span class="term-bullet">⏺</span> Upravuji CIDR na corp rozsah, spouštím `terraform plan`…</div>
+<div class="term-line"><span class="term-bullet">⏺</span> plan: 2 to change, 0 to destroy <span class="term-ok">OK</span></div>
+<div class="term-line"><span class="term-bullet">⏺</span> Otevřen PR #482 „Restrict SG ingress to corp CIDR“</div>
+                    </div>
+      </div>
+    </div>
+    <div class="stage-note"><b>Bezpečnostní úhel:</b> kontrola se přesouvá ze sledování obrazovky na review pull requestu — dohled existuje, ale je asynchronní a snadno se přeskočí pod tlakem termínu.</div>
+  </section>
+
+  <!-- STAGE 4 : HEADLESS / DELEGATED AGENT -->
+  <section class="stage">
+    <div class="stage-head">
+      <span class="stage-num">04</span>
+      <h2 class="stage-title">Headless agent</h2>
+      <div class="stage-badges">
+        <span class="badge">No human present</span>
+        <span class="badge">Drží API klíče, volá nástroje</span>
+      </div>
+    </div>
+    <p class="stage-desc">Vlastní agent běžící jako služba na serveru v SOC. Nikdo se nedívá v reálném čase — spouští se sám na nové detekce.</p>
+
+    <div class="mockups">
+      <div class="win">
+        <div class="chrome">
+          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <span class="chrome-title">soc-triage-agent.service — journalctl -f</span>
+        </div>
+        <div class="log-body">
+<div><span class="log-time">02:14:07</span>nová detekce: SIEM#88213 (podezřelý DNS tunneling)</div>
+<div><span class="log-time">02:14:09</span><span class="log-agent">agent:</span> obohacuji o threat-intel (VT, OTX)…</div>
+<div><span class="log-time">02:14:12</span><span class="log-agent">agent:</span> shoda s known C2 domain, confidence 0.91</div>
+<div><span class="log-time">02:14:13</span><span class="log-agent">agent:</span> izoluji endpoint přes EDR API…</div>
+<div><span class="log-time">02:14:14</span><span class="log-agent">agent:</span> otevírám ticket SOC-4471, přiřazuji L2</div>
+<div><span class="log-time">02:14:14</span><span class="log-ok">hotovo</span> — čeká na L2, žádný člověk zatím nezasahoval</div>
+        </div>
+      </div>
+    </div>
+    <div class="stage-note"><b>Bezpečnostní úhel:</b> dohled je jen zpětný, přes log a audit trail. Pokud agent udělá chybu ve 2 ráno, zjistíte to až ráno.</div>
+  </section>
+
+  <!-- STAGE 5 : PLATFORMS -->
+  <section class="stage">
+    <div class="stage-head">
+      <span class="stage-num">05</span>
+      <h2 class="stage-title">No-code / low-code platformy</h2>
+      <div class="stage-badges">
+        <span class="badge">No human present</span>
+        <span class="badge">Provedení: cizí platforma → vaše infrastruktura</span>
+      </div>
+    </div>
+    <p class="stage-desc">Tři různé cesty ke stejnému cíli — a tři různá místa, kde končí vaše odpovědnost za dohled.</p>
+
+    <div class="mockups">
+      <div class="win third">
+        <div class="chrome"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="chrome-title">n8n — workflow</span></div>
+        <div class="win-label">Vizuální orchestrace</div>
+        <div class="n8n-body">
+          <svg class="n8n-svg" viewBox="0 0 260 170"><path d="M70,30 C100,30 100,75 118,75"/><path d="M170,75 C195,75 195,35 218,35"/><path d="M170,75 C195,75 195,120 218,120"/></svg>
+          <div class="n8n-node" style="left:6px; top:14px;"><span class="k">TRIGGER</span>Nová zpráva v phishing@</div>
+          <div class="n8n-node" style="left:118px; top:60px;"><span class="k">AI NODE</span>Klasifikuj obsah</div>
+          <div class="n8n-node" style="left:216px; top:18px;"><span class="k">AKCE</span>Karanténa přílohy</div>
+          <div class="n8n-node" style="left:216px; top:104px;"><span class="k">AKCE</span>Slack: upozornit SOC</div>
+        </div>
+      </div>
+
+      <div class="win third">
+        <div class="chrome"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="chrome-title">Copilot Studio</span></div>
+        <div class="win-label">Konverzační copilot</div>
+        <div class="copilot-body">
+          <div class="msg user"><div class="bubble">Je tenhle e-mail phishing?</div></div>
+          <div class="msg assistant">
+            <div class="who"><span class="who-dot"></span>SecOps Copilot</div>
+            <div class="bubble">Odesílatel neodpovídá doméně dodavatele a odkaz vede mimo firemní rozsah. Doporučuji nahlásit.
+              <div class="cite-chip">📎 Security Policy #12</div>
+            </div>
+            <div class="quick-actions"><span class="qa-btn">Nahlásit</span><span class="qa-btn">Ignorovat</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="win third">
+        <div class="chrome"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="chrome-title">AWS Bedrock AgentCore</span></div>
+        <div class="win-label">Spravovaný agent runtime</div>
+        <div class="aws-body">
+<div>session: <span class="aws-tag">agentcore-guardduty-responder</span></div>
+<div>finding: GuardDuty EC2 UnauthorizedAccess</div>
+<div>tool_call: isolate-instance</div>
+<div>iam_role: <span class="aws-role">agentcore-exec-role</span></div>
+<div>cloudtrail: action logged ✓</div>
+<div>human_review: none</div>
+        </div>
+      </div>
+    </div>
+    <div class="stage-note"><b>Bezpečnostní úhel:</b> n8n běží na platformě mimo vaši síť, Copilot Studio žije ve vašem M365 tenantu, AgentCore jedná přímo ve vašem AWS účtu s reálnou IAM rolí. Stejná automatizace, tři různé hranice odpovědnosti.</div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  const btn = document.getElementById('noteToggle');
+  const notes = document.querySelectorAll('.stage-note');
+  let shown = false;
+  btn.addEventListener('click', ()=>{
+    shown = !shown;
+    notes.forEach(n=>n.classList.toggle('show', shown));
+    btn.classList.toggle('on', shown);
+    btn.textContent = shown ? 'Skrýt bezpečnostní poznámky' : 'Zobrazit bezpečnostní poznámky';
+  });
+
+  const slides = Array.from(document.querySelectorAll('.stage'));
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const pageIndicator = document.getElementById('pageIndicator');
+  const dotsWrap = document.getElementById('dots');
+  const total = slides.length;
+  let current = 0;
+
+  slides.forEach((_, i)=>{
+    const d = document.createElement('button');
+    d.className = 'dot-btn';
+    d.setAttribute('aria-label', 'Přejít na krok ' + (i+1));
+    d.addEventListener('click', ()=> showSlide(i));
+    dotsWrap.appendChild(d);
+  });
+  const dots = Array.from(dotsWrap.children);
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+
+  function showSlide(i){
+    if(i < 0 || i >= total) return;
+    current = i;
+    slides.forEach((s, idx)=> s.classList.toggle('active', idx===current));
+    dots.forEach((d, idx)=> d.classList.toggle('active', idx===current));
+    pageIndicator.textContent = pad(current+1) + ' / ' + pad(total);
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === total - 1;
+  }
+
+  prevBtn.addEventListener('click', ()=> showSlide(current - 1));
+  nextBtn.addEventListener('click', ()=> showSlide(current + 1));
+
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'ArrowRight'){ showSlide(current + 1); }
+    else if(e.key === 'ArrowLeft'){ showSlide(current - 1); }
+  });
+
+  showSlide(0);
+})();
+</script>
+
+</body>
+</html>
