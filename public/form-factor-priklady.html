@@ -245,9 +245,33 @@
     .win{ flex-basis: 100%; }
     .stage-badges{ margin-left:0; }
   }
+
+  .fs-toggle{
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 9999;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: rgba(31,23,37,0.85);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+  }
+  .fs-toggle:hover{ background: var(--panel-2); border-color: var(--berry); }
+  .fs-toggle svg{ width: 18px; height: 18px; }
 </style>
 </head>
 <body>
+<button type="button" class="fs-toggle" id="fsToggle" title="Fullscreen" aria-label="Toggle fullscreen">
+  <svg id="fsIconExpand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+  <svg id="fsIconCompress" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M9 3v3a2 2 0 0 1-2 2H4"/><path d="M15 3v3a2 2 0 0 0 2 2h3"/><path d="M9 21v-3a2 2 0 0 0-2-2H4"/><path d="M15 21v-3a2 2 0 0 1 2-2h3"/></svg>
+</button>
 <div class="wrap">
 
   <h1>Form factor: od dotazu v prohlížeči po autonomní agenty</h1>
@@ -514,6 +538,23 @@
   });
 
   showSlide(0);
+
+  const fsToggle = document.getElementById('fsToggle');
+  const fsIconExpand = document.getElementById('fsIconExpand');
+  const fsIconCompress = document.getElementById('fsIconCompress');
+  function updateFsIcon(){
+    const isFs = !!document.fullscreenElement;
+    fsIconExpand.style.display = isFs ? 'none' : '';
+    fsIconCompress.style.display = isFs ? '' : 'none';
+  }
+  fsToggle.addEventListener('click', ()=>{
+    if(!document.fullscreenElement){
+      document.documentElement.requestFullscreen().catch(()=>{});
+    } else {
+      document.exitFullscreen().catch(()=>{});
+    }
+  });
+  document.addEventListener('fullscreenchange', updateFsIcon);
 })();
 </script>
 
